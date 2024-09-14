@@ -36,6 +36,10 @@ async def parse_pagination(
     (total,) = (await session.execute(count_query(query))).scalars()
     result = (await session.execute(paginate_query(query, page=page, page_size=page_size))).fetchall()
     result = unwrap_scalars(result)
+    if isinstance(result, dict):
+        result = {key: value for key, value in result.items() if value is not None}
+    elif isinstance(result, list):
+        result = [{key: value for key, value in res.items() if value is not None} for res in result]
     total_page = int(ceil(float(total) / page_size))
     pagination = {
         'rowTotal': total,

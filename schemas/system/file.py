@@ -18,4 +18,4 @@ class FileDown(BaseModel):
 
 
 class FileId(BaseModel):
-    id: int = Field(..., description="文件id")
+    id: str = Field(..., description="文件id")

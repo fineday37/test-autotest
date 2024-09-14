@@ -38,7 +38,7 @@ class Configs(BaseSettings):
 
     # logger
     LOGGER_DIR: str = "logs"  # 日志文件夹名
-    LOGGER_NAME: str = 'zerorunner.log'  # 日志文件名  (时间格式 {time:YYYY-MM-DD_HH-mm-ss}.log)
+    LOGGER_NAME: str = '{time:YYYY-MM-DD_HH-mm}.log'  # 日志文件名  (时间格式 {time:YYYY-MM-DD_HH-mm-ss}.log)
     LOGGER_LEVEL: str = 'INFO'  # 日志等级: ['DEBUG' | 'INFO']
     LOGGER_ROTATION: str = "10 MB"  # 日志分片: 按 时间段/文件大小 切分日志. 例如 ["500 MB" | "12:00" | "1 week"]
     LOGGER_RETENTION: str = "7 days"  # 日志保留的时间: 超出将删除最早的日志. 例如 ["1 days"]
@@ -47,12 +47,13 @@ class Configs(BaseSettings):
     BASEDIR: str = os.path.join(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 
     # job
-    broker_url: Union[str, None] = Field(default=None, env="CELERY_BROKER_URL")
-    result_backend: Union[str, None] = Field(default=None, env="CELERY_RESULT_BACKEND")
+    broker_url: Union[str, None] = Field(default="redis://47.92.76.123:6379/1", env="CELERY_BROKER_URL")
+    result_backend: Union[str, None] = Field(default="redis://47.92.76.123:6379/2", env="CELERY_RESULT_BACKEND")
     accept_content: typing.List[str] = ["json"]
     result_serializer: str = "json"
     timezone: str = "Asia/Shanghai"
     enable_utc: bool = False
+    CELERY_TASK_ALWAYS_EAGER: bool = True
     # 并发工作进程/线程/绿色线程执行任务的数量 默认10
     worker_concurrency: int = 10
     # 一次预取多少消息乘以并发进程数 默认4
@@ -66,8 +67,8 @@ class Configs(BaseSettings):
     include: typing.List[typing.Any] = [
         'celery_worker.tasks.test_case',
         'celery_worker.tasks.common',
-        'celery_worker.tasks.task_run',
-        'celery_worker.tasks.ui_case',
+        # 'celery_worker.tasks.task_run',
+        # 'celery_worker.tasks.ui_case',
     ]
     # task_queues = (
     #     Queue('default', routing_key='default'),

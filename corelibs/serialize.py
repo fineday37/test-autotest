@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-# @author: xiaobai
 from datetime import datetime
 import typing
 from fastapi.encoders import jsonable_encoder

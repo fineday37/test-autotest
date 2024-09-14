@@ -20,17 +20,6 @@ from services.system.menu import MenuService
 
 class UserService:
     # 新增用户
-    @staticmethod
-    async def user_register(user_params: UserIn) -> "User":
-        """用户注册"""
-        id_info = await User.get_user_by_id(user_params.id)
-        if id_info:
-            raise HTTPException(status_code=200, detail="用户id已存在")
-        user_info = await User.get_user_by_name(user_params.username)
-        if user_info:
-            raise HTTPException(status_code=200, detail="用户名已被注册")
-        user = await User.create(user_params.model_dump())
-        return user
 
     # 登录
     @staticmethod
@@ -149,7 +138,7 @@ class UserService:
         token_user_info = await g.redis.get(TEST_USER_INFO.format(token))
         if not token_user_info:
             raise HTTPException(status_code=401, detail=CodeEnum.PARTNER_CODE_TOKEN_EXPIRED_FAIL.msg)
-        user_info = await User.get(token_user_info("id"))
+        user_info = await User.get(token_user_info["id"])
         if not user_info:
             raise HTTPException(status_code=401, detail=CodeEnum.PARTNER_CODE_TOKEN_EXPIRED_FAIL.msg)
         return {
@@ -186,6 +175,18 @@ class UserService:
             all_menu = await Menu.get_menu_by_ids(list(set(menu_ids)))
         parent_menu = [menu for menu in all_menu if menu['parent_id'] == 0]
         return MenuService.menu_assembly(parent_menu, all_menu) if menu_ids else []
+
+
+async def user_register(user_params: UserIn) -> "User":
+    """用户注册"""
+    id_info = await User.get_user_by_id(user_params.id)
+    if id_info:
+        raise HTTPException(status_code=200, detail="用户id已存在")
+    user_info = await User.get_user_by_name(user_params.username)
+    if user_info:
+        raise HTTPException(status_code=200, detail="用户名已被注册")
+    user = await User.create(user_params.model_dump())
+    return user
 
 
 

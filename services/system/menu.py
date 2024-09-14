@@ -1,5 +1,5 @@
 import traceback
-
+from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
 from loguru import logger
 import typing
@@ -29,15 +29,17 @@ class MenuService:
     @staticmethod
     async def save_or_update(params: MenuIn) -> typing.Dict[typing.Text, typing.Any]:
         existing_menu = await Menu.get_menu_by_name(params.name)
+        # 新增
         if not params.id:
             if existing_menu:
-                raise ValueError('路由名称已存在！')
+                raise HTTPException(status_code=200, detail='路由名称已存在！')
+        # 编辑新名称不等于其他名称
         else:
             menu_info = await Menu.get(params.id)
             if menu_info.name != params.name and existing_menu:
-                raise ValueError('路由名称已存在！')
+                raise HTTPException(status_code=200, detail='路由名称已存在！')
 
-        result = await Menu.create_or_update(params.dict())
+        result = await Menu.create_or_update(params.model_dump())
         return result
 
     @staticmethod
@@ -51,15 +53,17 @@ class MenuService:
 
     @staticmethod
     async def set_menu_views(params: MenuViews):
-        current_user_info = await current_user()
+        current_user_info = await current_user.current_user()
         current_user_id = current_user_info.get("id", None)
         remote_addr = g.request.headers.get("X-Real-Ip", None)
         # remote_ip = g.request.remote_addr
         if not params.menu_id:
-            return
+            raise HTTPException(status_code=200, detail="未选择菜单")
         try:
             await Menu.add_menu_views(params.menu_id)
+            data = await Menu.get_menu_views(params.menu_id)
             logger.info(f"[{current_user_id}] IP {remote_addr} 访问了[{params.menu_id}]菜单")
+            return data
         except Exception as err:
             logger.error(traceback.format_exc())
 

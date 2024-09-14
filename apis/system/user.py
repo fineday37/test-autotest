@@ -10,7 +10,7 @@ router = APIRouter()
 
 @router.post('/userRegister', description="新增用户")
 async def user_register(user_info: UserIn):
-    data = await UserService.user_register(user_info)
+    data = await user_register(user_info)
     return partner_success(data)
 
 
@@ -38,7 +38,7 @@ async def save_or_update(params: UserIn):
     return partner_success()
 
 
-@router.post("getUserInfoByToken", description="根据token获取用户信息")
+@router.post("/getUserInfoByToken", description="根据token获取用户信息")
 async def gey_user_info(request: Request):
     token = request.headers.get("token")
     user_info = await UserService.get_user_info_by_token(token)

@@ -7,7 +7,7 @@ from loguru import logger
 import os
 from pathlib import Path
 import aiofiles
-from schemas.system.file import FileIn
+from schemas.system.file import FileIn, FileId
 from models.systerm_models import FileInfo
 
 
@@ -46,4 +46,41 @@ class FileServer:
             'original_name': file.filename,
         }
         return data
+
+    @staticmethod
+    async def download(file_id: str):
+        file_info = await FileInfo.get(file_id)
+        if not file_info:
+            logger.error(f"{file_id} 文件不存在")
+            raise HTTPException(status_code=200, detail="文件不存在")
+        file_dir = Path(config.TEST_FILES_DIR).joinpath(file_info.name).as_posix()
+        if not os.path.isfile(file_dir):
+            raise HTTPException(status_code=200, detail='文件不存在')
+        return FileResponse(path=file_dir, filename=file_info.original_name)
+
+    @staticmethod
+    async def get_file_by_id(params: FileId):
+        file_info = await FileInfo.get(params.id)
+        if not file_info:
+            logger.error("文件不存在")
+            raise HTTPException(status_code=200, detail="文件不存在")
+        file_dir = Path(config.TEST_FILES_DIR).joinpath(file_info.name)
+        if not file_dir:
+            logger.error("文件不存在")
+            raise HTTPException(status_code=200, detail="文件不存在")
+        data = {
+            "id": file_info.id,
+            "url": f'/file//download/{file_info.id}',
+            "name": file_info.original_name
+        }
+        return data
+
+    @staticmethod
+    async def deletes(params: FileId):
+        file_info = await FileInfo.get(params.id)
+        abs_file_path = file_info.file_path
+        os.remove(abs_file_path)
+        return await FileInfo.delete(params.id, _hard=True)
+
+
 

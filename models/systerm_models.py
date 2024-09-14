@@ -1,9 +1,12 @@
+from fastapi.encoders import jsonable_encoder
+
 from models.base import Base
 from sqlalchemy import Column, String, Text, Integer, DateTime, select, update, BigInteger, Index, JSON
 from schemas.system.user import UserQuery, UserLoginRecordQuery
 import typing
 from sqlalchemy.orm import aliased
 from schemas.system.roles import RoleQuery
+
 
 class User(Base):
     """用户表"""
@@ -128,7 +131,7 @@ class Menu(Base):
     @classmethod
     async def get_menu_all(cls):
         """获取菜单id"""
-        stmt = select(cls.get_table_columns()).where(cls.enabled_flag == 1).order_by(cls.sort)
+        stmt = select(cls.get_table_columns({"menu_type"})).where(cls.enabled_flag == 1).order_by(cls.sort)
         return await cls.get_result(stmt)
 
     @classmethod
@@ -167,6 +170,11 @@ class Menu(Base):
         result = await cls.execute(stmt)
         return result.rowcount
 
+    @classmethod
+    async def get_menu_views(cls, menu_id: int):
+        stmt = select(cls.views).where(cls.id == menu_id, cls.enabled_flag == 1)
+        return await cls.get_result(stmt, True)
+
 
 class Roles(Base):
     """角色表"""
@@ -197,7 +205,6 @@ class Roles(Base):
             .outerjoin(u, u.id == cls.created_by) \
             .outerjoin(User, User.id == cls.updated_by) \
             .order_by(cls.id.desc())
-
         return await cls.pagination(stmt)
 
     @classmethod

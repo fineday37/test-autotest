@@ -1,3 +1,4 @@
+import datetime
 import typing
 
 from sqlalchemy import Column, Boolean, DateTime, Integer, func, select, update, delete, insert, Select, \
@@ -33,9 +34,14 @@ class Base:
     #     return cls.__name__.lower()
 
     id = Column(Integer(), nullable=False, primary_key=True, autoincrement=True)
-    creation_date = Column(DateTime(), default=func.now(), comment='创建时间')
+    # func用于调用数据库自身函数
+
+    # creation_date = Column(DateTime(), default=func.now(), comment='创建时间')
+    creation_date = Column(DateTime(), default=datetime.datetime.now(), comment='创建时间')
     created_by = Column(Integer, nullable=True, comment='创建人ID')
-    updation_date = Column(DateTime(), default=func.now(), onupdate=func.now(), nullable=True, comment='更新时间')
+    # updation_date = Column(DateTime(), default=func.now(), onupdate=func.now(), nullable=True, comment='更新时间')
+    updation_date = Column(DateTime(), default=datetime.datetime.now(),
+                           onupdate=datetime.datetime.now(), nullable=True, comment='更新时间')
     updated_by = Column(Integer, nullable=True, comment='更新人ID')
     enabled_flag = Column(Boolean(), default=1, nullable=False, comment='是否删除, 0 删除 1 非删除')
     trace_id = Column(String(255), nullable=True, comment="trace_id")
@@ -177,6 +183,7 @@ class Base:
         else:
             stmt = delete(cls).where(cls.id == id)
         result = await cls.execute(stmt)
+        await cls.commit()
         return result.rowcount
 
     @classmethod

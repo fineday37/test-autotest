@@ -1,3 +1,5 @@
+import os.path
+
 from fastapi import FastAPI, Depends
 from config import config
 from init.dependencies import set_global_request
@@ -10,13 +12,35 @@ from init.exception import init_exception
 from init.middleware import init_middleware, my_middleware
 from init.mount import init_mount
 from init.routers import init_router
+from fastapi.middleware.cors import CORSMiddleware
 from db import init_redis_pool
-
+from exceptions.CustomHTTPException import CustomHTTPException
+from fastapi import Request
+from fastapi.responses import JSONResponse
 
 app = FastAPI(title="zerorunner",
               description=config.PROJECT_DESC,
               version=config.PROJECT_VERSION,
-              dependencies=[Depends(set_global_request), Depends(login_verification)])
+              # dependencies=[Depends(set_global_request), Depends(login_verification)]
+              )
+
+
+@app.exception_handler(CustomHTTPException)
+async def custom_http_exception_handler(request: Request, exc: CustomHTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"code": exc.error_message},
+    )
+
+
+origins = ['*']
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 async def init_app():

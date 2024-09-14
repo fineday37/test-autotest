@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-# @author: xiaobai
 import os
 import sys
 import logging
@@ -15,7 +13,7 @@ from utils.common import get_str_uuid
 
 def logger_file() -> str:
     """ 创建日志文件名 """
-    log_path = create_dir(config.LOGGER_DIR)
+    log_path = create_dir.create_dir(config.LOGGER_DIR)
 
     """ 保留日志文件夹下最大个数(本地调试用) 
     本地调式需要多次重启, 日志轮转片不会生效 """
@@ -35,7 +33,8 @@ def correlation_id_filter(record):
 
 
 # 详见: https://loguru.readthedocs.io/en/stable/overview.html#features
-fmt = "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green>| {thread} | <level>{level: <8}</level> | <yellow> {trace_id} </yellow> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | <level>{message}</level>"
+fmt = "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green>| {thread} | <level>{level: <8}</level> | <yellow> {trace_id} " \
+      "</yellow> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | <level>{message}</level> "
 logger.remove()
 logger.add(
     # logger_file(),
@@ -49,6 +48,7 @@ logger.add(
     format=fmt,
     # enqueue=True
 )
+logger.add(logger_file())
 
 
 class InterceptHandler(logging.Handler):

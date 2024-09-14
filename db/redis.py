@@ -4,10 +4,14 @@
 
 import json
 import typing
+import datetime
+
 from aioredis import Redis, DataError
 from redis.typing import KeyT, FieldT, EncodableT, AnyFieldT
 
 from config import config
+
+ExpiryT = typing.Union[int, datetime.timedelta]
 
 
 class MyRedis(Redis):
@@ -23,9 +27,13 @@ class MyRedis(Redis):
 
     async def set(
             self,
-            name: str,
-            value: typing.Any,
-            ex: typing.Optional[int] = None,
+            name: KeyT,
+            value: EncodableT,
+            ex: typing.Optional[ExpiryT] = None,
+            px: typing.Optional[ExpiryT] = None,
+            nx: bool = False,
+            xx: bool = False,
+            keepttl: bool = False,
     ) -> typing.Any:
         return await super(MyRedis, self).set(name, json.dumps(value), ex=ex)
 

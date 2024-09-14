@@ -59,7 +59,7 @@ def partner_success(data=None,
 
 def resp_200(*, data: typing.Any = '', msg: str = "Success") -> dict:
     logger.info(msg)
-    return {'code': 200, 'data': data, 'msg': msg}
+    return {'code': CodeEnum.PARTNER_CODE_OK.code, 'data': data, 'msg': msg}
 
 
 def resp_400(code: int = 400, data: str = None, msg: str = "请求错误(400)") -> Response:
