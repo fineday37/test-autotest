@@ -26,7 +26,7 @@ class SessionRunner(object):
     config: TConfig
     teststeps: typing.List[typing.Any]
 
-    parser: Parser = None
+    parser: Parser = Parser()
     case_id: str = ""
     extracted_variables: VariablesMapping = {}
     session: HttpSession = None

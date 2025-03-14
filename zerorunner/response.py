@@ -154,7 +154,6 @@ class ResponseObjectBase(object):
         extract_mapping = {}
         for extractor in extractors:
             if '$' in extractor.path:
-                # field contains variable or function
                 extractor.path = parse_data(
                     extractor.path, variables_mapping, functions_mapping
                 )

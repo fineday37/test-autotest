@@ -60,7 +60,7 @@ class ApiQuery(BaseSchema):
     priority: int = Field(None, description="优先级")
     project_id: int = Field(None, description="项目id")
     project_ids: typing.List[int] = Field(None, description="项目ids")
-    module_id: int = Field(None, description="模块id")
+    module_id: Optional[typing.List[int]] = Field(None, description="模块id")
     module_ids: typing.List[int] = Field(None, description="ids")
     project_name: str = Field(None, description="项目名")
     order_field: str = Field(None, description="排序字段")

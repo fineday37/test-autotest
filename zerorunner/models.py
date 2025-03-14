@@ -190,7 +190,7 @@ class StepResult(BaseModel):
     # post_hook_data: typing.List['StepResult'] = Field([], description="后置")
     setup_hook_results: typing.List['StepResult'] = Field([], description="前置hook")
     teardown_hook_results: typing.List['StepResult'] = Field([], description="后置hook")
-    export_vars: VariablesMapping = Field({}, description="")
+    export_vars: VariablesMapping = Field({}, description="提取变量数据")
     log: str = Field("", description="执行log")
     attachment: str = Field("", description="附件")
 

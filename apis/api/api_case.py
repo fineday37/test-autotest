@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from schemas.api.api_case import ApiCaseQuery, ApiCaseIdQuery, ApiCaseIn, ApiTestCaseRun
+from schemas.api.api_case import ApiCaseQuery, ApiCaseIdQuery, ApiCaseIn, ApiTestCaseRun, ApiCaseId
 from services.api.api_case import ApiCaseService
 from corelibs.http_response import partner_success
 from utils.current_user import current_user
@@ -40,3 +40,9 @@ async def run_test_case(params: ApiTestCaseRun):
     # async_run_testcase.apply_async(kwargs=kwargs, __business_id=params.id)
     await async_run_testcase(**kwargs)
     return partner_success(msg="用例异步运行， 请稍后再测试报告列表查看 😊")
+
+
+@router.post("/getCaseInfo", description="获取用例详情")
+async def get_case_info(params: ApiCaseId):
+    data = await ApiCaseService.get_case_info(params)
+    return partner_success(data)

@@ -5,6 +5,7 @@ from loguru import logger
 from schemas.api.api_info import ApiQuery, ApiInfoIn, ApiId, ApiRunSchema
 from services.api.api_info import ApiInfoService
 from corelibs.http_response import partner_success, resp_200
+from corelibs import g
 
 router = APIRouter()
 
@@ -47,4 +48,9 @@ async def run_api(params: ApiRunSchema):
     summary = await ApiInfoService.run(params)
     return partner_success(summary)
 
+
+@router.post("/debugApi", description="调试接口")
+async def debug_api(params: ApiInfoIn):
+    data = await ApiInfoService.debug(params)
+    return partner_success(data)
 

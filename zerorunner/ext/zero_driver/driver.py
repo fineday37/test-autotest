@@ -1,5 +1,6 @@
 import copy
 
+import webdriver_manager.drivers.edge
 from loguru import logger
 from pydantic import BaseModel, Field
 from selenium import webdriver
@@ -9,6 +10,7 @@ from zerorunner.model.base import CheckModeEnum
 from zerorunner.exceptions import ParamsError, ValidationFailure
 from zerorunner.models import Validators, VariablesMapping, ExtractData
 from zerorunner.parse import Parser, parse_string_value
+from webdriver_manager.microsoft import EdgeChromiumDriverManager
 
 
 class DriverSetting(BaseModel):
@@ -38,7 +40,8 @@ class ZeroDriver:
                 options.add_argument("--headless")
             if setting.executable_path:
                 """本地执行"""
-                self.driver = webdriver.Chrome(executable_path=setting.executable_path, options=options)
+                # self.driver = webdriver.Chrome(executable_path=setting.executable_path, options=options)
+                self.driver = webdriver.Edge(EdgeChromiumDriverManager().install())
             else:
                 """远程执行"""
                 # 默认vnc密码：secret

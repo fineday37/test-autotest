@@ -115,9 +115,9 @@ def run_api_request(runner: SessionRunner,
         merge_variable = runner.get_merge_variable(step)
 
         # parse variables
-        # merge_variable = parse_variables_mapping(
-        #     merge_variable, runner.parser.functions_mapping
-        # )
+        merge_variable = parse_variables_mapping(
+            merge_variable, runner.parser.functions_mapping
+        )
         # setup hooks
         if step.setup_hooks:
             runner.set_run_log(f"{step_result.name} setup hooks start~~~")
@@ -132,19 +132,11 @@ def run_api_request(runner: SessionRunner,
             zero = Zero(headers=request_dict['headers'],
                         environment=runner.config.env_variables,
                         variables=step.variables)
-            load_script_content(step.setup_code, str(uuid.uuid4()), params={"zero": zero, "requests": requests})
-            parsed_zero_headers = runner.parser.parse_data(
-                zero.headers.get_headers(), merge_variable
-            )
-            request_dict["headers"].update(parsed_zero_headers)
-            parsed_zero_environment = runner.parser.parse_data(
-                zero.environment.get_environment(), merge_variable
-            )
-            runner.config.env_variables.update(parsed_zero_environment)
-            parsed_zero_variables = runner.parser.parse_data(
-                zero.variables.get_variables(), merge_variable
-            )
-            step.variables.update(parsed_zero_variables)
+            _, captured_output = load_script_content(content=step.setup_code,
+                                                     module_name=f"{runner.config.case_id}_setup_code",
+                                                     params={"zero": zero, "requests": requests})
+            if captured_output:
+                logger.info(f"setup code: {captured_output}")
 
         # 前置步骤后再执行下合并 避免前置步骤中复制变量获取不到
         merge_variable = runner.get_merge_variable(step)

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, root_validator
+from pydantic import BaseModel, Field, model_validator
 import typing
 from schemas.system.base import BaseSchema
 
@@ -11,7 +11,7 @@ class RoleIn(BaseModel):
     description: str = Field(None, description="描述")
     status: int = Field(default=10, description="状态 10 启用 20 禁用")
 
-    @root_validator(pre=True)
+    @model_validator(mode='before')
     def root_validator(cls, data: typing.Dict[typing.Text, typing.Any]):
         menus = data.get("menus", [])
         if menus:
@@ -21,7 +21,7 @@ class RoleIn(BaseModel):
 
 class RoleQuery(BaseSchema):
     id: int = Field(None, description="角色id")
-    name: str = Field(None, description="角色名称")
+    name: typing.Optional[str] = Field(None, description="角色名称")
     role_type: str = Field(10, description="角色类型")
 
 

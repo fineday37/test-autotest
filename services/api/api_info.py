@@ -60,3 +60,10 @@ class ApiInfoService:
                                                       exec_user_name=params.exec_user_name,
                                                       )
         return report_info
+
+    @staticmethod
+    async def debug(params: ApiInfoIn):
+        case_info = await HandelRunApiStep().init(params)
+        runner = ZeroRunner()
+        summary = runner.run_tests(case_info.get_testcase())
+        return summary

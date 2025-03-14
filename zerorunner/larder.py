@@ -1,9 +1,14 @@
+import contextlib
 import csv
 import os
 import sys
 import traceback
 import types
 import typing
+from io import StringIO
+
+from loguru import logger
+
 from zerorunner import exceptions
 
 
@@ -29,16 +34,42 @@ def load_module_functions(module) -> typing.Dict[str, typing.Callable]:
     return module_functions
 
 
-def load_script_content(content: str, module_name: str, params: dict = None) -> types.ModuleType:
+class CapturingLogHandler:
+    def __init__(self, output_buffer):
+        self.output_buffer = output_buffer
+
+    def write(self, message):
+        self.output_buffer.write(message)
+
+
+def load_script_content(content: str, module_name: str, params: dict = None) -> [types.ModuleType, StringIO]:
     mod = sys.modules.setdefault(module_name, types.ModuleType(module_name))
+    output_buffer = StringIO()
+    log_handler = CapturingLogHandler(output_buffer)
+    fmt = "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <" \
+          "level>{level: <8}</level> | <cyan>{line}</cyan> | <level>{message}</level>"
+    temp_logger = logger.add(log_handler, format=fmt)
+    if not params:
+        params = {}
+    if "request" not in params:
+        import requests
+        params["requests"] = requests
+    params["logger"] = temp_logger
+    # if content:
+    #     content = f'print({content}, end="")'
     if params:
         mod.__dict__.update(params)
     try:
-        code = compile(content, module_name, 'exec')
-        exec(code, mod.__dict__)
-        return mod
+        code = compile(content, module_name, "exec")
+        with contextlib.redirect_stdout(output_buffer):
+            exec(code, mod.__dict__)
+        captured_output = output_buffer.getvalue()
+        return mod, captured_output
     except IndentationError:
-        raise IndentationError(f"脚本格式错误，请检查！\n {traceback.format_exc()}")
+        raise IndentationError(f"格式错误，请检查！\n {traceback.format_exc()}")
+    finally:
+        logger.remove(temp_logger)
+        output_buffer.close()
 
 
 def load_csv_file(csv_file: str) -> typing.List[typing.Dict]:

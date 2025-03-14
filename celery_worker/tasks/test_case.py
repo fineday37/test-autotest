@@ -158,7 +158,7 @@ async def run_case_step(report_id: typing.Union[str, int]):
 
     if run_test_num == 0:
         static_dict = await r.get(testcase_static_key)
-        report_info.update(static_dict)
+        await report_info.update(static_dict)
         summary_params = TestReportSaveSchema(**report_info)
         summary_params.success = static_dict["run_err_count"] == 0 and static_dict["run_fail_count"] == 0
         await ReportService.save_report_info(summary_params)

@@ -69,7 +69,6 @@ class ZeroRunner(object):
             setattr(loaded_testcase, "teststeps", testcase.teststeps)
             setattr(loaded_testcase, "runner", test_runner)
             testcase_list.append(loaded_testcase)
-            # test_suite.addTest(loaded_testcase)
 
         return testcase_list
 

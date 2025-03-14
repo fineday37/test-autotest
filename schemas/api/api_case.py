@@ -27,6 +27,10 @@ class ApiCaseIdQuery(BaseModel):
     ids: typing.List[int] = Field(None, description='')
 
 
+class ApiCaseId(BaseModel):
+    id: int = Field(None, description="")
+
+
 class ApiBaseSchema(BaseModel):
     key: str = Field(None, description="")
     value: str = Field(None, description="")

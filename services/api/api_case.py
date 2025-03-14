@@ -1,5 +1,5 @@
 import typing
-from schemas.api.api_case import ApiCaseQuery, ApiCaseIdQuery, ApiCaseIn
+from schemas.api.api_case import ApiCaseQuery, ApiCaseIdQuery, ApiCaseIn, ApiCaseId
 from models.api_models import ApiCase
 from fastapi import HTTPException
 
@@ -27,3 +27,10 @@ class ApiCaseService:
             if api_case_info.name != params.name and existing_data:
                 raise HTTPException(status_code=200, detail="用例名称已存在")
         return await ApiCase.create_or_update(params.model_dump())
+
+    @staticmethod
+    async def get_case_info(params: ApiCaseId):
+        data = await ApiCase.get(params.id)
+        if not data:
+            raise ValueError('不存在当前套件！')
+        return data

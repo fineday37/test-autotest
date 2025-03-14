@@ -7,7 +7,8 @@ from schemas.api.api_case import ApiCaseQuery, ApiCaseIdQuery
 from schemas.api.api_info import ApiQuery, ApiInfoIn
 from models.systerm_models import User
 from schemas.api.api_report import TestReportDetailQuery, TestReportQuery
-from schemas.api.env import EnvQuery
+from schemas.api.data_source import DataSourceQuery
+from schemas.api.env import EnvQuery, BindingDataSourceIn, BindingFuncIn
 from schemas.api.project import ProjectQuery, ProjectIn
 from schemas.api.module import ModuleQuery
 from schemas.api.functions import FunctionQuery
@@ -236,7 +237,7 @@ class ApiInfo(Base):
         if params.project_id:
             q.append(cls.project_id == params.project_id)
         if params.module_id:
-            q.append(cls.module_id == params.module_id)
+            q.append(cls.module_id == params.module_id[-1])
         if params.code:
             q.append(cls.code.like('%{}%'.format(params.code)))
         if params.module_ids:
@@ -374,6 +375,63 @@ class Env(Base):
             .order_by(cls.id.desc())
         return await cls.pagination(stmt)
 
+    @classmethod
+    async def get_by_id(cls, env_id: int) -> typing.Dict:
+        u = aliased(User)
+        stmt = select(cls.get_table_columns(), User.nickname.label('created_by_name'),
+                      u.nickname.label("update_by_name")) \
+            .outerjoin(u, u.id == cls.updated_by) \
+            .outerjoin(User, User.id == cls.created_by).where(cls.enabled_flag == 1, cls.id == env_id)
+        return await cls.get_result(stmt, first=True)
+
+
+class EnvDataSource(Base):
+    __tablename__ = 'env_data_source'
+    env_id = Column(Integer, nullable=True, comment='关联环境')
+    data_source_id = Column(Integer, nullable=True, comment='关联数据源')
+
+    @classmethod
+    async def unbinding_data_source(cls, params: BindingDataSourceIn):
+        stmt = update(cls).where(cls.enabled_flag == 1,
+                                 cls.env_id == params.env_id,
+                                 cls.data_source_id.in_(params.data_source_ids)).values(enabled_flag=0)
+        return await cls.get_result(stmt)
+
+    @classmethod
+    async def get_by_env_id(cls, env_id: int):
+        stmt = select(cls.id, cls.env_id.label("env_id"), Env.name.label("env_name"),
+                      DataSource.name, DataSource.id.label("data_source_id"),
+                      DataSource.host, DataSource.port, DataSource.source_type,
+                      DataSource.user, DataSource.creation_date,
+                      DataSource.updation_date).where(cls.enabled_flag == 1, cls.env_id == env_id) \
+            .join(DataSource, DataSource.id == cls.data_source_id).join(Env, Env.id == cls.env_id) \
+            .order_by(cls.id.desc())
+        return await cls.get_result(stmt)
+
+
+class EnvFunc(Base):
+    __tablename__ = 'env_func'
+    env_id = Column(Integer, nullable=True, index=True, comment='关联环境')
+    func_id = Column(Integer, nullable=True, index=True, comment='关联函数')
+
+    @classmethod
+    async def unbinding_func(cls, params: BindingFuncIn):
+        stmt = update(cls).where(cls.enabled_flag == 1,
+                                 cls.env_id == params.env_id,
+                                 cls.func_id.in_(params.data_source_ids)).values(enabled_flag=0)
+        return await cls.get_result(stmt)
+
+    @classmethod
+    async def get_by_env_id(cls, env_id: int):
+        stmt = select(cls.id, cls.env_id.label("env_id"), Env.name.label("env_name"),
+                      Functions.name, Functions.id.label("func_id"),
+                      Functions.content, Functions.func_type, Functions.func_tags,
+                      Functions.creation_date,
+                      Functions.updation_date).where(cls.enabled_flag == 1, cls.env_id == env_id) \
+            .join(Functions, Functions.id == cls.func_id).join(Env, Env.id == cls.env_id) \
+            .order_by(cls.id.desc())
+        return await cls.get_result(stmt)
+
 
 class Functions(Base):
     __tablename__ = 'functions'
@@ -397,9 +455,9 @@ class Functions(Base):
         stmt = select(cls.get_table_columns(),
                       ProjectInfo.name.label('project_name'),
                       User.nickname.label('created_by_name'),
-                      u.nickname.label('update_by_name')).where(*q)\
-            .outerjoin(ProjectInfo, ProjectInfo.id == cls.project_id)\
-            .outerjoin(User, User.id == cls.created_by)\
+                      u.nickname.label('update_by_name')).where(*q) \
+            .outerjoin(ProjectInfo, ProjectInfo.id == cls.project_id) \
+            .outerjoin(User, User.id == cls.created_by) \
             .outerjoin(u, u.id == cls.updated_by)
         return await cls.pagination(stmt)
 
@@ -407,30 +465,6 @@ class Functions(Base):
     async def get_function_by_id(cls, function_id: int):
         q = [cls.enabled_flag == 1, cls.id == function_id]
         stmt = select(cls.get_table_columns()).where(*q)
-        return await cls.get_result(stmt)
-
-
-class EnvFunc(Base):
-    """环境数据源管理表"""
-    __tablename__ = 'env_func'
-
-    env_id = Column(Integer, nullable=True, index=True, comment='环境id')
-    func_id = Column(Integer, nullable=True, index=True, comment='辅助函数id')
-
-    @classmethod
-    async def get_by_env_id(cls, env_id: int):
-        q = [cls.enabled_flag == 1, cls.env_id == env_id]
-        stmt = select(cls.get_table_columns(),
-                      cls.env_id.label("env_id"),
-                      Env.name.label("env_name"),
-                      Functions.name.label("name"),
-                      Functions.remarks.label("remarks"),
-                      Functions.content.label("content"),
-                      Functions.id.label("func_id")
-                      ) \
-            .where(*q) \
-            .outerjoin(Env, Env.id == cls.env_id) \
-            .outerjoin(Functions, Functions.id == cls.func_id)
         return await cls.get_result(stmt)
 
 
@@ -617,3 +651,33 @@ class ApiTestReportDetail:
         cls = mode_class()
         cls.id = id
         return cls
+
+
+class DataSource(Base):
+    __tablename__ = 'data_source'
+
+    source_type = Column(String(255), nullable=False, comment='数据源类型', index=True)
+    name = Column(String(255), nullable=False, comment='数据源名称', index=True)
+    host = Column(String(255), nullable=False, comment='ip')
+    port = Column(String(255), nullable=True, comment='端口')
+    user = Column(String(255), nullable=False, comment='用户名')
+    password = Column(String(255), nullable=False, comment='密码')
+
+    @classmethod
+    async def get_list(cls, params: DataSourceQuery):
+        q = [cls.enabled_flag == 1]
+        if params.id:
+            q.append(cls.id == params.id)
+        if params.source_type:
+            q.append(cls.source_type == params.source_type)
+        if params.name:
+            q.append(cls.name.like(f'%{params.name}%'))
+        if params.source_ids and isinstance(params.source_ids, list):
+            q.append(cls.id.in_(params.source_ids))
+        u = aliased(User)
+        stmt = select(cls.get_table_columns(exclude={"password"}),
+                      u.nickname.label("create_by_name"),
+                      User.nickname.label("update_by_name")).where(*q).outerjoin(
+            User, cls.updated_by == User.id
+        ).outerjoin(u, cls.created_by == u.id).order_by(cls.id.desc())
+        return await cls.pagination(stmt)

@@ -51,9 +51,17 @@ def partner_success(data=None,
         for i in range(len(content["data"])):
             content["data"][i] = {key: value for key, value in content["data"][i].items() if value is not None}
     if not isinstance(content["data"], (dict, list)):
-        mapper = inspect(content["data"].__class__)
-        content["data"] = {key: getattr(content["data"], key) for key in mapper.attrs.keys() if
-                           getattr(content["data"], key) is not None}
+        try:
+            mapper = inspect(content["data"].__class__)
+            content["data"] = {key: getattr(content["data"], key) for key in mapper.attrs.keys() if
+                               getattr(content["data"], key) is not None}
+            return ORJSONResponse(status_code=http_code, content=content, headers=headers)
+        except Exception as e:
+            logger.error(e)
+            mapper = content["data"].dict()
+            content["data"] = {key: getattr(content["data"], key) for key in mapper.keys() if
+                               getattr(content["data"], key) is not None}
+            return ORJSONResponse(status_code=http_code, content=content, headers=headers)
     return ORJSONResponse(status_code=http_code, content=content, headers=headers)
 
 

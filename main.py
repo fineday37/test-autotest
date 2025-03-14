@@ -1,6 +1,8 @@
 import os.path
 
 from fastapi import FastAPI, Depends
+from starlette.requests import ClientDisconnect
+
 from config import config
 from init.dependencies import set_global_request
 import uvicorn
@@ -17,12 +19,20 @@ from db import init_redis_pool
 from exceptions.CustomHTTPException import CustomHTTPException
 from fastapi import Request
 from fastapi.responses import JSONResponse
+from corelibs import g
+from services.api.mock_api import MockService
 
 app = FastAPI(title="zerorunner",
               description=config.PROJECT_DESC,
               version=config.PROJECT_VERSION,
-              # dependencies=[Depends(set_global_request), Depends(login_verification)]
+              dependencies=[Depends(set_global_request)]
               )
+
+
+@app.middleware("")
+async def add_process_time_header(request: Request, call_next):
+    response = await call_next(request)
+    return response
 
 
 @app.exception_handler(CustomHTTPException)
@@ -44,6 +54,8 @@ app.add_middleware(
 
 
 async def init_app():
+
+    await MockService.run_mock(app)
     """ 注册中心 """
     init_mount(app)  # 挂载静态文件
 

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# @author: xiaobai
 import traceback
 from asyncio import current_task
 import functools
